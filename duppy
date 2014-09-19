@@ -1,0 +1,159 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+Duppy
+-----
+
+Duppy is a simple script to find duplicate files in a given
+directory and copies the unique ones to another dir. Comparisons
+are done using the file's MD5hashes. I used it to clean up my 
+photo library
+
+"""
+from __future__ import with_statement
+import os,sys,time
+import hashlib,shutil
+
+
+###### functions
+def getArgs(args):
+    """ Externalise argument parsein
+    """
+    try: 
+        sourceDir = args[1] 
+    except IndexError:
+        printHelp()
+
+    try:
+        targetDir = args[2]
+    except IndexError:
+        printHelp()
+
+    return (sourceDir,targetDir)
+
+def printHelp():
+    """Print a short help message
+    """    
+    s = "Usage: duppy inputDir outputDir"
+    print s
+    exit(-1)
+
+def getAllFiles(workDir):
+    """Acquire list of files in a given directory
+
+    :arg workDir: directory of interest
+    :type workDir: <string> 
+
+    :return: list of all files in directory
+    :rtype: [<string>]
+    """
+
+    # "alloc" output
+    files = []
+    for dirpath, dirnames, filenames in os.walk(workDir):
+        for filename in filenames:
+            files.append( os.path.join(dirpath, filename) )
+
+    return files
+
+def file2MD5(fileName):
+    """Compute MD5hashes of file given as 
+
+    :arg workDir: the file in question
+    :type workDir: <string> 
+
+    :return: MD5hash
+    :rtype: <string>
+    """
+
+    # "alloc" output
+    md5 = hashlib.md5()
+
+    # read file contents and feed to hasher
+    with open(fileName) as f:
+        md5.update(f.read())
+    
+    # return
+    return md5.hexdigest()
+
+def compareMD5(fileList):
+    """Check list of MD5 hashes for duplicates 
+    and return their indeces
+
+    :
+
+    """
+    # alloc hash list (in case it gets large)
+    hashList = [[]]*len(fileList)
+
+    for i,iFile in enumerate(fileList):
+        hashList[i] = file2MD5(iFile)
+
+    # prep up
+    nFiles = len(hashList)
+    idx = [];
+    totalSize = 0;
+
+    for iFile in range(nFiles):
+        for jFile in range(iFile+1,nFiles):
+            if hashList[iFile] == hashList[jFile]:
+                
+                # store indeces of dublicates
+                idx.append(jFile)  
+                # get files size in kB
+                statinfo = os.stat(fileList[jFile])
+
+                fSize = statinfo.st_size / (1024**2)
+                totalSize += fSize
+
+    # some stats 
+    print "Found %d redundant files (%.1f MB)" % (len(idx),totalSize)
+
+    return idx
+
+def main(args=None):
+    """ Main function
+    
+    :arg args: arguments passed to script
+    :type args: [] eg. sys.argv
+    """
+    if args is None:
+        printHelp()
+        return
+
+    # set time 
+    startTime = time.time()
+
+    # acquire directories
+    (sourceDir,targetDir) = getArgs(args)
+
+    # get all files in source directory
+    fileList = getAllFiles(sourceDir)
+    nStart = len(fileList)
+
+
+    print "Comparing files ...."
+    idx = compareMD5(fileList)
+
+    # reverse delete indices
+    if len(idx):
+
+        for i in reversed(idx):
+            del fileList[i]
+
+        for iFile in fileList:
+            shutil.copy2(iFile, targetDir)
+
+        print "Copied %d files to %s" % (len(fileList),targetDir)
+
+    # and exec time
+    deltaT = time.time() - startTime
+    print "Processed %d files w/ %d duplicates in  %.0f secs " % (nStart, len(idx),deltaT)
+
+
+if __name__ == '__main__':
+    
+    main(sys.argv)
+
+
