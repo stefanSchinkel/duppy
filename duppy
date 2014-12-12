@@ -18,7 +18,13 @@ import hashlib,shutil
 
 ###### functions
 def getArgs(args):
-    """ Externalise argument parsein
+    """ Externalised argument parsing
+
+    :arg args: passed arguments
+    :type args: [], typically sys.argv
+
+    :return:  source and target directory
+    :rtype: (<strings>) 2-element tuple of strings
     """
     try: 
         sourceDir = args[1] 
@@ -33,7 +39,7 @@ def getArgs(args):
     return (sourceDir,targetDir)
 
 def printHelp():
-    """Print a short help message
+    """Prints a short help message
     """    
     s = "Usage: duppy inputDir outputDir"
     print s
@@ -58,16 +64,16 @@ def getAllFiles(workDir):
     return files
 
 def file2MD5(fileName):
-    """Compute MD5hashes of file given as 
+    """Compute MD5hashes of a file 
 
-    :arg workDir: the file in question
-    :type workDir: <string> 
+    :arg fileName: full name of file
+    :type fileName: <string> 
 
     :return: MD5hash
     :rtype: <string>
     """
 
-    # "alloc" output
+    # "alloc" 
     md5 = hashlib.md5()
 
     # read file contents and feed to hasher
@@ -81,7 +87,8 @@ def compareMD5(fileList):
     """Check list of MD5 hashes for duplicates 
     and return their indeces
 
-    :
+    :arg fileList: list of files to compare
+    :type fileList: [<string>]
 
     """
     # alloc hash list (in case it gets large)
